@@ -1,0 +1,67 @@
+(setq keywords '("and" "or" "not" "equal" "append" "concat" "set" "deffun" "for" "while" "if" "exit"))
+
+(defun read-input-file (filename)
+  (with-open-file (stream filename)
+    (loop for item = (read-char stream nil)
+          while item
+          collect item))
+)
+
+(defun word-finder (char_list)
+  (if (both-case-p (character (car char_list)))
+	(cons (character (car char_list)) (word-finder (cdr char_list)))
+  )
+)
+
+(defun integer-finder (int_list)
+  (if (digit-char-p (character (car int_list)))
+	(cons (read-from-string (string (car int_list))) (integer-finder (cdr int_list)))
+  )
+)
+
+(defun ltos (input_list)
+  (setq i (- (list-length input_list) 1))
+  (setq str (subseq (string (car input_list)) 0))
+  (setq reserve_list input_list)
+    (loop while (> i 0)
+      do 
+        (setq reserve_list (cdr reserve_list))
+        (setq str (concatenate 'string str (string (car reserve_list))))
+        (setq i (- i 1))
+    )
+  str
+)
+
+(defun contains (item in_list)
+	(dolist (i in_list)
+        (if (equal i (ltos item))
+        	(return-from contains T))
+    )
+)
+
+(defun conditional-check (input_list)
+	(setq flag nil)
+	(cond 
+		((equal nil input_list)
+			(setq flag T))
+		((both-case-p (car input_list))
+			(setq identifier (word-finder input_list))
+           		(if (equal T (contains identifier keywords))
+					(print (cons "Next token is KEYWORD,    next lexeme is: " (ltos identifier))) 
+					(print (cons "Next token is IDENTIFIER, next lexeme is: " (ltos identifier))))
+           		(conditional-check (subseq input_list (list-length identifier))))
+		((digit-char-p (car input_list)) ;; TODO: Integer check
+			(setq integer (integer-finder input_list))
+			(print (cons "Next token is INTEGER,    next lexeme is: " integer)))
+		((dolist (j '(#\+ #\- #\/ #\* #\( #\)))
+			(if (equal j (car input_list))
+				(print (cons "Next token is OPERATOR,   next lexeme is: " (string j))))))
+	)
+	(if (not (equal T flag))
+		(conditional-check (cdr input_list))
+	)
+)
+
+(defun lexer (input_file)
+	(conditional-check (read-input-file input_file))
+)
